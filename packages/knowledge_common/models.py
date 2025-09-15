@@ -72,6 +72,7 @@ class DocumentModel(BaseModel):
     tags: Mapped[Optional[List[str]]] = Column(JSON)
     doc_metadata: Mapped[Optional[dict]] = Column(JSON)
     is_published: Mapped[bool] = Column(Boolean, default=True, nullable=False)
+    is_active: Mapped[bool] = Column(Boolean, default=True, nullable=False)
     version: Mapped[str] = Column(String(50), default="1.0", nullable=False)
     last_sync_at: Mapped[Optional[datetime]] = Column(DateTime)
     view_count: Mapped[int] = Column(Integer, default=0, nullable=False)

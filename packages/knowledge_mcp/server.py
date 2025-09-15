@@ -385,32 +385,51 @@ class KnowledgeBaseMCPServer:
     async def _get_categories_data(self) -> List[Dict[str, Any]]:
         """获取分类数据"""
         from sqlalchemy import select, func
-        from ..knowledge_common.models import DocumentModel
+        from ..knowledge_common.models import DocumentModel, CategoryModel
 
         async with db_manager.get_session() as session:
-            query = select(
-                DocumentModel.category,
+            # 查询有分类的文档统计
+            categorized_query = select(
+                CategoryModel.name,
                 func.count(DocumentModel.id).label("count")
+            ).select_from(
+                CategoryModel.__table__.join(
+                    DocumentModel.__table__,
+                    CategoryModel.id == DocumentModel.category_id
+                )
             ).where(
-                DocumentModel.is_active == True,
-                DocumentModel.category.isnot(None)
-            ).group_by(DocumentModel.category)
+                DocumentModel.is_active == True
+            ).group_by(CategoryModel.name)
 
-            result = await session.execute(query)
-            categories = result.fetchall()
+            categorized_result = await session.execute(categorized_query)
+            categories_data = []
 
-            return [
-                {
-                    "name": category or "未分类",
+            for name, count in categorized_result.fetchall():
+                categories_data.append({
+                    "name": name,
                     "count": count
-                }
-                for category, count in categories
-            ]
+                })
+
+            # 查询未分类文档数量
+            uncategorized_query = select(func.count(DocumentModel.id)).where(
+                DocumentModel.is_active == True,
+                DocumentModel.category_id.is_(None)
+            )
+            uncategorized_result = await session.execute(uncategorized_query)
+            uncategorized_count = uncategorized_result.scalar() or 0
+
+            if uncategorized_count > 0:
+                categories_data.append({
+                    "name": "未分类",
+                    "count": uncategorized_count
+                })
+
+            return categories_data
 
     async def _get_stats_data(self) -> Dict[str, Any]:
         """获取统计数据"""
         from sqlalchemy import select, func
-        from ..knowledge_common.models import DocumentModel
+        from ..knowledge_common.models import DocumentModel, CategoryModel
 
         async with db_manager.get_session() as session:
             # 总文档数
@@ -419,18 +438,34 @@ class KnowledgeBaseMCPServer:
             total_documents = total_result.scalar()
 
             # 分类统计
-            category_query = select(
-                DocumentModel.category,
+            categorized_query = select(
+                CategoryModel.name,
                 func.count(DocumentModel.id).label("count")
+            ).select_from(
+                CategoryModel.__table__.join(
+                    DocumentModel.__table__,
+                    CategoryModel.id == DocumentModel.category_id
+                )
             ).where(
                 DocumentModel.is_active == True
-            ).group_by(DocumentModel.category)
+            ).group_by(CategoryModel.name)
 
-            category_result = await session.execute(category_query)
-            categories = {
-                category or "未分类": count
-                for category, count in category_result.fetchall()
-            }
+            categorized_result = await session.execute(categorized_query)
+            categories = {}
+
+            for name, count in categorized_result.fetchall():
+                categories[name] = count
+
+            # 未分类文档统计
+            uncategorized_query = select(func.count(DocumentModel.id)).where(
+                DocumentModel.is_active == True,
+                DocumentModel.category_id.is_(None)
+            )
+            uncategorized_result = await session.execute(uncategorized_query)
+            uncategorized_count = uncategorized_result.scalar() or 0
+
+            if uncategorized_count > 0:
+                categories["未分类"] = uncategorized_count
 
             # 来源统计
             source_query = select(
