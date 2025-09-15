@@ -33,6 +33,9 @@ class ChineseAnalyzer(Analyzer):
 
     def __call__(self, text, **kwargs):
         """分析文本"""
+        # 转换为小写以支持不区分大小写搜索
+        text = text.lower()
+
         # 使用jieba进行中文分词
         words = jieba.cut_for_search(text)
         tokens = []
@@ -68,7 +71,7 @@ class SearchEngine:
         return fields.Schema(
             id=fields.ID(stored=True),
             title=fields.TEXT(stored=True, analyzer=self.analyzer),
-            content=fields.TEXT(analyzer=self.analyzer),
+            content=fields.TEXT(stored=True, analyzer=self.analyzer),
             category=fields.ID(stored=True),
             source_type=fields.ID(stored=True),
             author=fields.TEXT(stored=True),
@@ -190,6 +193,9 @@ class SearchEngine:
         """构建搜索查询"""
         from whoosh.query import Or, And, Term, Wildcard, FuzzyTerm
 
+        # 转换查询字符串为小写以支持不区分大小写搜索
+        query_str = query_str.lower()
+
         # 预处理查询字符串
         query_terms = []
         if settings.chinese_analyzer:
@@ -247,8 +253,8 @@ class SearchEngine:
 
         return main_query
 
-    def _generate_excerpt(self, hit, query_str: str, max_length: int = 200) -> str:
-        """生成搜索结果摘要"""
+    def _generate_excerpt(self, hit, query_str: str, max_length: int = None) -> str:
+        """获取搜索结果的完整内容"""
         try:
             # 尝试从不同来源获取内容
             content = ""
@@ -265,7 +271,7 @@ class SearchEngine:
                         pass
 
             if not content:
-                # 如果没有内容，尝试从标题生成摘要
+                # 如果没有内容，尝试从标题获取
                 title = ""
                 if hasattr(hit, 'get'):
                     title = hit.get("title", "")
@@ -277,77 +283,10 @@ class SearchEngine:
                             title = str(hit.get("title", ""))
                         except:
                             pass
-                return title[:max_length] if title else ""
+                return title
 
-            # 预处理查询词
-            query_terms = []
-            if settings.chinese_analyzer:
-                words = list(jieba.cut(query_str))
-                query_terms = [word.strip() for word in words if len(word.strip()) >= settings.min_word_len]
-            else:
-                query_terms = [word.strip() for word in query_str.split() if len(word.strip()) > 0]
-
-            # 查找最佳匹配位置
-            best_pos = -1
-            best_score = 0
-
-            for term in query_terms:
-                if term in content:
-                    pos = content.find(term)
-                    # 计算此位置的得分（匹配词的长度）
-                    score = len(term)
-                    if score > best_score:
-                        best_score = score
-                        best_pos = pos
-
-            if best_pos != -1:
-                # 以最佳匹配位置为中心生成摘要
-                start = max(0, best_pos - max_length // 2)
-                end = min(len(content), best_pos + max_length // 2)
-
-                # 尝试在句子边界调整
-                if start > 0:
-                    # 向前查找句子开始
-                    for i in range(start, max(0, start - 50), -1):
-                        if content[i] in '。！？\n':
-                            start = i + 1
-                            break
-
-                if end < len(content):
-                    # 向后查找句子结束
-                    for i in range(end, min(len(content), end + 50)):
-                        if content[i] in '。！？\n':
-                            end = i + 1
-                            break
-
-                excerpt = content[start:end].strip()
-
-                # 高亮关键词
-                for term in query_terms:
-                    if term in excerpt:
-                        excerpt = excerpt.replace(term, f"**{term}**")
-
-                # 添加省略号
-                if start > 0:
-                    excerpt = "..." + excerpt
-                if end < len(content):
-                    excerpt = excerpt + "..."
-
-                return excerpt
-
-            # 如果没有找到关键词，返回内容开头
-            if len(content) <= max_length:
-                return content.strip()
-            else:
-                # 尝试在句子边界截断
-                excerpt = content[:max_length]
-                last_sentence = excerpt.rfind('。')
-                if last_sentence > max_length // 2:
-                    excerpt = excerpt[:last_sentence + 1]
-                else:
-                    excerpt = excerpt + "..."
-
-                return excerpt.strip()
+            # 返回完整内容
+            return content.strip()
 
         except Exception as e:
             logger.warning("Failed to generate excerpt", error=str(e), query=query_str)

@@ -71,6 +71,8 @@ site/
 tmp/
 temp/
 *.tmp
+test
+tests
 
 # 测试覆盖率
 .coverage

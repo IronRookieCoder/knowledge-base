@@ -10,12 +10,56 @@ from fastapi.responses import JSONResponse
 import uvicorn
 
 from ..knowledge_common.config import settings
-from ..knowledge_common.database import db_manager
+from ..knowledge_common.database import db_manager, get_db
 from ..knowledge_common.logging import get_logger
+from ..knowledge_common.models import DocumentModel
 from .models import ErrorResponse
 from .routers import documents, health
+from sqlalchemy import select
 
 logger = get_logger(__name__)
+
+
+async def rebuild_search_index():
+    """从数据库重建搜索索引"""
+    try:
+        logger.info("开始重建搜索索引...")
+
+        # 获取搜索引擎
+        from .search import search_engine
+
+        # 获取所有已发布的文档
+        async for session in get_db():
+            query = select(DocumentModel).where(DocumentModel.is_published == True)
+            result = await session.execute(query)
+            documents = result.scalars().all()
+
+            logger.info(f"找到 {len(documents)} 个文档")
+
+            # 转换为搜索引擎格式
+            search_docs = []
+            for doc in documents:
+                search_doc = {
+                    "id": str(doc.id),
+                    "title": doc.title or "",
+                    "content": doc.content or "",
+                    "category": "docs",
+                    "source_type": doc.source_type or "local",
+                    "author": doc.author or "Unknown",
+                    "file_path": doc.file_path or "",
+                    "created_at": doc.created_at.strftime("%Y%m%d%H%M%S") if doc.created_at else "20240101000000",
+                    "updated_at": doc.updated_at.strftime("%Y%m%d%H%M%S") if doc.updated_at else "20240101000000"
+                }
+                search_docs.append(search_doc)
+
+            # 重建索引
+            await search_engine.rebuild_index(search_docs)
+            logger.info("搜索索引重建完成")
+            break  # 只需要一次会话
+
+    except Exception as e:
+        logger.error("重建搜索索引失败", error=str(e))
+        # 不抛出异常，允许服务继续启动
 
 
 @asynccontextmanager
@@ -29,9 +73,10 @@ async def lifespan(app: FastAPI):
         await db_manager.initialize()
         logger.info("Database initialized")
 
-        # 初始化搜索索引
+        # 初始化搜索索引并从数据库重建
         from .search import search_engine
-        logger.info("Search engine initialized")
+        await rebuild_search_index()
+        logger.info("Search engine initialized and index rebuilt")
 
         yield
 

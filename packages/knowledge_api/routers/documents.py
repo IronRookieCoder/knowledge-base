@@ -58,7 +58,7 @@ async def list_documents(
                 category="docs",  # 暂时简化
                 author=doc.author,
                 updated_at=doc.updated_at,
-                excerpt=doc.content[:200] + "..." if len(doc.content) > 200 else doc.content
+                excerpt=doc.content
             )
             for doc in documents
         ]

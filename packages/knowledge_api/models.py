@@ -35,7 +35,7 @@ class DocumentSummary(BaseModel):
     category: Optional[str] = None
     author: Optional[str] = None
     updated_at: datetime
-    excerpt: Optional[str] = None  # 内容摘要
+    excerpt: Optional[str] = None  # 完整内容
 
     class Config:
         from_attributes = True

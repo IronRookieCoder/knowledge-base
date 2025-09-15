@@ -260,7 +260,7 @@ class KnowledgeBaseMCPServer:
                     result_text += f"**作者**: {doc['author']}\n"
                 result_text += f"**更新时间**: {doc['updated_at']}\n"
                 if doc['excerpt']:
-                    result_text += f"**摘要**: {doc['excerpt']}\n"
+                    result_text += f"**内容**: {doc['excerpt']}\n"
                 result_text += "\n"
 
             result_text += f"\n💡 使用 get_document 工具并提供文档ID可获取完整内容"

@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
 Windows环境下的make替代脚本
 """
@@ -9,11 +10,23 @@ import os
 import time
 from pathlib import Path
 
+# 设置控制台编码为UTF-8
+if sys.platform == "win32":
+    import locale
+    import codecs
+
+    # 尝试设置UTF-8编码
+    try:
+        sys.stdout = codecs.getwriter('utf-8')(sys.stdout.buffer, 'strict')
+        sys.stderr = codecs.getwriter('utf-8')(sys.stderr.buffer, 'strict')
+    except:
+        pass
+
 
 def run_command(command, description="", background=False):
     """运行命令"""
-    print(f"📋 {description}")
-    print(f"💻 执行: {command}")
+    print(f"[任务] {description}")
+    print(f"[执行] {command}")
 
     if background:
         # 后台运行
@@ -54,7 +67,7 @@ def install():
 
 def dev():
     """启动开发环境"""
-    print("🚀 启动开发环境...")
+    print("[启动] 开发环境启动中...")
 
     # 启动API服务(后台)
     api_process = run_command(
@@ -139,7 +152,7 @@ def clean():
     """清理缓存"""
     import shutil
 
-    print("🧹 清理缓存...")
+    print("[清理] 缓存清理中...")
 
     # 查找并删除__pycache__目录
     for root, dirs, files in os.walk('.'):
@@ -156,7 +169,7 @@ def clean():
                 print(f"删除: {pyc_file}")
                 os.remove(pyc_file)
 
-    print("✅ 缓存清理完成")
+    print("[完成] 缓存清理完成")
 
 
 def main():
@@ -188,11 +201,11 @@ def main():
         try:
             commands[command]()
         except KeyboardInterrupt:
-            print("\n❌ 操作被用户中断")
+            print("\n[中断] 操作被用户中断")
         except Exception as e:
-            print(f"❌ 执行失败: {e}")
+            print(f"[错误] 执行失败: {e}")
     else:
-        print(f"❌ 未知命令: {command}")
+        print(f"[错误] 未知命令: {command}")
         help_command()
 
 
