@@ -1,0 +1,68 @@
+# 自定义词典文件
+# 用于jieba中文分词的自定义词汇
+
+# 技术术语
+API接口
+RESTful
+GraphQL
+微服务
+容器化
+Kubernetes
+Docker
+CI/CD
+DevOps
+
+# 编程语言
+Python
+JavaScript
+TypeScript
+Java
+Go
+Rust
+C++
+
+# 框架和库
+FastAPI
+Django
+Flask
+React
+Vue
+Angular
+Spring
+Express
+
+# 数据库
+SQLite
+MySQL
+MongoDB
+Redis
+Elasticsearch
+PostgreSQL
+
+# 云服务
+AWS
+Azure
+阿里云
+腾讯云
+
+# 开发工具
+Git
+GitHub
+GitLab
+Jenkins
+Docker
+Nginx
+
+# 文档相关
+Markdown
+MkDocs
+Confluence
+知识库
+文档管理
+
+# 业务术语
+产品文档
+技术规范
+部署指南
+操作手册
+最佳实践

@@ -1,0 +1,23 @@
+# 生产环境配置
+environment: production
+debug: false
+
+database:
+  pool_size: 20
+  echo: false
+
+api:
+  cors_origins:
+    - "https://claude.ai"
+    - "https://knowledge.company.com"
+
+logging:
+  level: "INFO"
+  format: "json"
+  file: "/var/log/knowledge-base/app.log"
+
+search:
+  index_path: "/app/data/search_index"
+
+sync:
+  schedule: "0 2,8,14,20 * * *"  # 每6小时在固定时间同步

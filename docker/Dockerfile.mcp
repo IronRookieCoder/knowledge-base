@@ -1,0 +1,35 @@
+# MCP服务容器镜像
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# 安装系统依赖
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+# 复制项目文件
+COPY pyproject.toml ./
+COPY packages/ ./packages/
+COPY config/ ./config/
+
+# 安装Python依赖
+RUN pip install --no-cache-dir -e .[mcp]
+
+# 创建非root用户
+RUN useradd -m -u 1000 appuser && chown -R appuser:appuser /app
+USER appuser
+
+# 设置环境变量
+ENV PYTHONPATH=/app
+ENV PYTHONUNBUFFERED=1
+
+# 暴露端口
+EXPOSE 9000
+
+# 健康检查
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD python -c "import asyncio; from packages.knowledge_common.database import db_manager; asyncio.run(db_manager.get_session().__anext__())" || exit 1
+
+# 启动命令
+CMD ["python", "-m", "packages.knowledge_mcp.server"]

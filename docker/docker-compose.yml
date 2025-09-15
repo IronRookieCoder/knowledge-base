@@ -1,0 +1,115 @@
+# Docker Compose配置文件
+version: '3.8'
+
+services:
+  # SQLite数据库不需要单独容器，使用本地卷存储
+
+  # 同步服务
+  sync-service:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.sync
+    container_name: kb-sync
+    environment:
+      - DATABASE_URL=sqlite+aiosqlite:///app/data/knowledge_base.db
+      - GITLAB_URL=${GITLAB_URL}
+      - GITLAB_TOKEN=${GITLAB_TOKEN}
+      - CONFLUENCE_URL=${CONFLUENCE_URL}
+      - CONFLUENCE_USER=${CONFLUENCE_USER}
+      - CONFLUENCE_TOKEN=${CONFLUENCE_TOKEN}
+      - ENVIRONMENT=production
+    volumes:
+      - docs_data:/app/packages/docs/docs
+      - sqlite_data:/app/data
+      - ../config:/app/config:ro
+      - /tmp:/tmp
+    # SQLite不需要数据库服务依赖
+    restart: unless-stopped
+    networks:
+      - kb-network
+
+  # API服务
+  api-service:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.api
+    container_name: kb-api
+    environment:
+      - DATABASE_URL=sqlite+aiosqlite:///app/data/knowledge_base.db
+      - ENVIRONMENT=production
+      - API_HOST=0.0.0.0
+      - API_PORT=8080
+    volumes:
+      - docs_data:/app/packages/docs/docs:ro
+      - search_index:/app/data/search_index
+      - sqlite_data:/app/data
+      - ../config:/app/config:ro
+    ports:
+      - "8080:8080"
+    # SQLite不需要数据库服务依赖
+    restart: unless-stopped
+    networks:
+      - kb-network
+
+  # MCP服务
+  mcp-service:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.mcp
+    container_name: kb-mcp
+    environment:
+      - DATABASE_URL=sqlite+aiosqlite:///app/data/knowledge_base.db
+      - API_BASE_URL=http://api-service:8080
+      - ENVIRONMENT=production
+    volumes:
+      - search_index:/app/data/search_index:ro
+      - ../config:/app/config:ro
+    ports:
+      - "9000:9000"
+    depends_on:
+      - api-service
+    restart: unless-stopped
+    networks:
+      - kb-network
+
+  # Web服务 (可选，用于文档展示)
+  web-service:
+    image: nginx:alpine
+    container_name: kb-web
+    volumes:
+      - docs_data:/usr/share/nginx/html:ro
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    ports:
+      - "8000:80"
+    depends_on:
+      - api-service
+    restart: unless-stopped
+    networks:
+      - kb-network
+
+  # Redis缓存 (可选)
+  redis:
+    image: redis:7-alpine
+    container_name: kb-redis
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+    networks:
+      - kb-network
+
+volumes:
+  sqlite_data:
+    driver: local
+  docs_data:
+    driver: local
+  search_index:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  kb-network:
+    driver: bridge

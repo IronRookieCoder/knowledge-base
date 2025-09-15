@@ -1,0 +1,44 @@
+# 文档同步源配置
+sources:
+  # GitLab项目配置
+  gitlab:
+    - name: "产品文档"
+      project_id: 123
+      docs_path: "docs/"
+      branch: "main"
+      target_path: "product/"
+      category: "product"
+
+    - name: "开发文档"
+      project_id: 456
+      docs_path: "documentation/"
+      branch: "develop"
+      target_path: "development/"
+      category: "development"
+
+    - name: "API文档"
+      project_id: 789
+      docs_path: "api-docs/"
+      branch: "main"
+      target_path: "api/"
+      category: "api"
+
+  # Confluence空间配置
+  confluence:
+    - key: "DEV"
+      name: "开发指南"
+      target_path: "dev-guide/"
+      category: "development"
+      include_attachments: true
+
+    - key: "API"
+      name: "API文档"
+      target_path: "api-docs/"
+      category: "api"
+      include_attachments: false
+
+    - key: "PROD"
+      name: "产品文档"
+      target_path: "product-docs/"
+      category: "product"
+      include_attachments: true

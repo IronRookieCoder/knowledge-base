@@ -1,0 +1,103 @@
+[project]
+name = "knowledge-base"
+version = "1.0.0"
+description = "企业知识库管理系统"
+dependencies = [
+    # 核心框架
+    "fastapi>=0.104.0",
+    "uvicorn[standard]>=0.24.0",
+    "aiohttp>=3.9.0",
+
+    # 数据库
+    "sqlalchemy>=2.0.0",
+    "aiosqlite>=0.19.0",
+    "alembic>=1.12.0",
+
+    # 配置管理
+    "pydantic>=2.5.0",
+    "pydantic-settings>=2.1.0",
+    "pyyaml>=6.0.1",
+    "python-dotenv>=1.0.0",
+
+    # 通用工具
+    "requests>=2.31.0",
+    "structlog>=23.2.0",
+    "click>=8.1.0",
+]
+
+[project.optional-dependencies]
+# 同步服务依赖
+sync = [
+    "python-gitlab>=4.2.0",
+    "GitPython>=3.1.40",
+    "atlassian-python-api>=3.41.0",
+    "html2text>=2020.1.16",
+]
+
+# API服务依赖
+api = [
+    "whoosh>=2.7.4",
+    "python-multipart>=0.0.6",
+    "jieba>=0.42.1",  # 中文分词
+    "slowapi>=0.1.9",  # 限流中间件
+]
+
+# MCP服务依赖
+mcp = [
+    "mcp>=1.0.0",
+    "websockets>=12.0",
+]
+
+# Web服务依赖
+web = [
+    "mkdocs>=1.5.3",
+    "mkdocs-material>=9.4.0",
+]
+
+# 开发依赖
+dev = [
+    "pytest>=7.4.0",
+    "pytest-asyncio>=0.21.0",
+    "black>=23.11.0",
+    "isort>=5.12.0",
+    "mypy>=1.7.0",
+    "pre-commit>=3.6.0",
+    "httpx>=0.25.0",  # FastAPI测试客户端
+    "aiosqlite>=0.19.0",  # SQLite异步驱动（测试用）
+]
+
+# 完整安装
+all = ["knowledge-base[sync,api,mcp,web,dev]"]
+
+[project.scripts]
+kb-sync = "packages.knowledge_sync.main:main"
+kb-api = "packages.knowledge_api.main:main"
+kb-mcp = "packages.knowledge_mcp.server:main"
+
+[build-system]
+requires = ["setuptools>=45", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["packages*"]
+
+[tool.black]
+line-length = 100
+target-version = ['py38']
+
+[tool.isort]
+profile = "black"
+line_length = 100
+
+[tool.mypy]
+python_version = "3.8"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]

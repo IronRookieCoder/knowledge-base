@@ -1,0 +1,48 @@
+# 开发环境Docker Compose配置
+version: '3.8'
+
+services:
+  # SQLite数据库不需要单独容器，使用本地卷存储
+
+  # Redis (开发环境)
+  redis:
+    image: redis:7-alpine
+    container_name: kb-redis-dev
+    ports:
+      - "6380:6379"  # 使用不同端口
+    restart: unless-stopped
+    networks:
+      - kb-dev-network
+
+  # 开发环境API服务 (热重载)
+  api-service:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.api
+    container_name: kb-api-dev
+    environment:
+      - DATABASE_URL=sqlite+aiosqlite:///app/data/knowledge_base_dev.db
+      - ENVIRONMENT=development
+      - DEBUG=true
+    volumes:
+      - ../packages:/app/packages  # 挂载源码以支持热重载
+      - ../config:/app/config
+      - search_dev_index:/app/data/search_index
+      - sqlite_dev_data:/app/data
+    ports:
+      - "8081:8080"
+    # SQLite不需要数据库服务依赖
+    restart: unless-stopped
+    command: ["python", "-m", "uvicorn", "packages.knowledge_api.main:app", "--host", "0.0.0.0", "--port", "8080", "--reload"]
+    networks:
+      - kb-dev-network
+
+volumes:
+  sqlite_dev_data:
+    driver: local
+  search_dev_index:
+    driver: local
+
+networks:
+  kb-dev-network:
+    driver: bridge

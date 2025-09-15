@@ -1,0 +1,19 @@
+# 开发环境配置
+environment: development
+debug: true
+
+database:
+  url: "sqlite+aiosqlite:///data/knowledge_base_dev.db"
+  echo: true
+
+api:
+  cors_origins:
+    - "http://localhost:3000"
+    - "http://127.0.0.1:3000"
+    - "http://localhost:8000"
+
+logging:
+  level: "DEBUG"
+
+search:
+  index_path: "data/search_index_dev"
