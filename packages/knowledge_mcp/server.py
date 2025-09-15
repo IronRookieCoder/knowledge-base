@@ -7,21 +7,12 @@ import json
 from typing import Any, Dict, List, Optional, Sequence
 
 from mcp.server import Server
-from mcp.server.models import InitializationOptions
 from mcp.server.stdio import stdio_server
 from mcp.types import (
-    CallToolRequest,
-    GetPromptRequest,
-    ListPromptsRequest,
-    ListResourcesRequest,
-    ListToolsRequest,
-    ReadResourceRequest,
     Tool,
     TextContent,
     Prompt,
-    Resource,
-    ImageContent,
-    EmbeddedResource
+    Resource
 )
 
 from ..knowledge_common.config import settings
@@ -468,18 +459,11 @@ class KnowledgeBaseMCPServer:
         # 初始化数据库
         await db_manager.create_tables()
 
-        async with stdio_server() as (read_stream, write_stream):
+        async with stdio_server() as streams:
             await self.server.run(
-                read_stream,
-                write_stream,
-                InitializationOptions(
-                    server_name="knowledge-base",
-                    server_version="1.0.0",
-                    capabilities=self.server.get_capabilities(
-                        notification_options=None,
-                        experimental_capabilities={}
-                    )
-                )
+                streams[0],  # read stream
+                streams[1],  # write stream
+                self.server.create_initialization_options()
             )
 
 

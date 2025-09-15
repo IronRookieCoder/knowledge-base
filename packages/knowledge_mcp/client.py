@@ -21,6 +21,7 @@ class KnowledgeBaseMCPClient:
     def __init__(self, server_script_path: str = "packages/knowledge_mcp/server.py"):
         self.server_script_path = server_script_path
         self.session: ClientSession = None
+        self.stdio_transport = None
 
     async def connect(self):
         """连接到MCP服务器"""
@@ -29,8 +30,10 @@ class KnowledgeBaseMCPClient:
             args=["-m", "packages.knowledge_mcp.server"]
         )
 
-        stdio_transport = await stdio_client(server_params)
-        self.session = ClientSession(stdio_transport[0], stdio_transport[1])
+        # 使用异步上下文管理器
+        self.stdio_transport = stdio_client(server_params)
+        read_stream, write_stream = await self.stdio_transport.__aenter__()
+        self.session = ClientSession(read_stream, write_stream)
 
         await self.session.initialize()
         logger.info("Connected to MCP server")
@@ -39,7 +42,9 @@ class KnowledgeBaseMCPClient:
         """断开连接"""
         if self.session:
             await self.session.close()
-            logger.info("Disconnected from MCP server")
+        if hasattr(self, 'stdio_transport') and self.stdio_transport:
+            await self.stdio_transport.__aexit__(None, None, None)
+        logger.info("Disconnected from MCP server")
 
     async def list_tools(self) -> List[Dict[str, Any]]:
         """列出可用工具"""

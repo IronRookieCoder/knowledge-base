@@ -31,10 +31,10 @@ class GitLabSyncer:
 
     def __init__(self):
         self.gitlab_client = gitlab.Gitlab(
-            settings.gitlab.url,
-            private_token=settings.gitlab.token
+            settings.gitlab_url,
+            private_token=settings.gitlab_token
         )
-        self.output_dir = Path(settings.sync.docs_output_dir)
+        self.output_dir = Path(settings.docs_output_dir)
         ensure_directory(self.output_dir)
 
     async def sync_projects(self, projects_config: List[Dict[str, Any]]) -> None:
@@ -274,12 +274,12 @@ class GitLabSyncer:
         self,
         session: AsyncSession,
         source_id: str
-    ) -> Optional[Document]:
+    ) -> Optional[DocumentModel]:
         """查找已存在的文档"""
         from sqlalchemy import select
 
         result = await session.execute(
-            select(Document).where(Document.source_id == source_id)
+            select(DocumentModel).where(DocumentModel.source_id == source_id)
         )
         return result.scalar_one_or_none()
 
@@ -287,9 +287,9 @@ class GitLabSyncer:
         self,
         session: AsyncSession,
         doc_data: Dict[str, Any]
-    ) -> Document:
+    ) -> DocumentModel:
         """创建新文档"""
-        document = Document(
+        document = DocumentModel(
             title=doc_data["title"],
             content=doc_data["content"],
             file_path=doc_data["file_path"],
@@ -317,7 +317,7 @@ class GitLabSyncer:
     async def _update_document(
         self,
         session: AsyncSession,
-        document: Document,
+        document: DocumentModel,
         doc_data: Dict[str, Any]
     ) -> None:
         """更新文档"""
@@ -362,7 +362,7 @@ class GitLabSyncer:
     ) -> None:
         """记录同步成功日志"""
         async with db_manager.get_session() as session:
-            log_entry = SyncLog(
+            log_entry = SyncLogModel(
                 source_type="gitlab",
                 source_id=str(project_config["project_id"]),
                 operation="sync",
@@ -380,7 +380,7 @@ class GitLabSyncer:
     ) -> None:
         """记录同步错误日志"""
         async with db_manager.get_session() as session:
-            log_entry = SyncLog(
+            log_entry = SyncLogModel(
                 source_type="gitlab",
                 source_id=str(project_config.get("project_id", "unknown")),
                 operation="sync",

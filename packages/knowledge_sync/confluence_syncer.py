@@ -30,9 +30,9 @@ class ConfluenceSyncer:
 
     def __init__(self):
         self.confluence = Confluence(
-            url=settings.confluence.url,
-            username=settings.confluence.username,
-            password=settings.confluence.token,
+            url=settings.confluence_url,
+            username=settings.confluence_username,
+            password=settings.confluence_token,
             cloud=True
         )
         self.html_converter = html2text.HTML2Text()
@@ -40,7 +40,7 @@ class ConfluenceSyncer:
         self.html_converter.ignore_images = False
         self.html_converter.body_width = 0  # 不限制行宽
 
-        self.output_dir = Path(settings.sync.docs_output_dir)
+        self.output_dir = Path(settings.docs_output_dir)
         ensure_directory(self.output_dir)
 
     async def sync_spaces(self, spaces_config: List[Dict[str, Any]]) -> None:
@@ -402,12 +402,12 @@ class ConfluenceSyncer:
         self,
         session: AsyncSession,
         source_id: str
-    ) -> Optional[Document]:
+    ) -> Optional[DocumentModel]:
         """查找已存在的文档"""
         from sqlalchemy import select
 
         result = await session.execute(
-            select(Document).where(Document.source_id == source_id)
+            select(DocumentModel).where(DocumentModel.source_id == source_id)
         )
         return result.scalar_one_or_none()
 
@@ -415,9 +415,9 @@ class ConfluenceSyncer:
         self,
         session: AsyncSession,
         doc_data: Dict[str, Any]
-    ) -> Document:
+    ) -> DocumentModel:
         """创建新文档"""
-        document = Document(
+        document = DocumentModel(
             title=doc_data["title"],
             content=doc_data["content"],
             file_path=doc_data["file_path"],
@@ -445,7 +445,7 @@ class ConfluenceSyncer:
     async def _update_document(
         self,
         session: AsyncSession,
-        document: Document,
+        document: DocumentModel,
         doc_data: Dict[str, Any]
     ) -> None:
         """更新文档"""
