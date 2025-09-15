@@ -45,5 +45,5 @@ sources:
 
   # 本地文档配置
   local:
-    docs_dir: "packages/docs/docs"
-    category: "docs"
+    # docs_dir: "packages/docs/docs"  # 将使用环境变量 DOCS_OUTPUT_DIR
+    # category: "docs"                # 将使用环境变量 DEFAULT_CATEGORY

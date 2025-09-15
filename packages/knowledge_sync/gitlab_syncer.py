@@ -53,10 +53,10 @@ class GitLabSyncer:
     async def _sync_single_project(self, project_config: Dict[str, Any]) -> None:
         """同步单个项目的文档"""
         project_id = project_config["project_id"]
-        docs_path = project_config.get("docs_path", "docs/")
-        branch = project_config.get("branch", "main")
+        docs_path = project_config.get("docs_path", settings.default_gitlab_docs_path)
+        branch = project_config.get("branch", settings.default_gitlab_branch)
         target_path = project_config.get("target_path", f"project-{project_id}/")
-        category = project_config.get("category", "general")
+        category = project_config.get("category", settings.default_general_category)
 
         logger.info(
             "Starting sync for project",
@@ -137,11 +137,11 @@ class GitLabSyncer:
                     shutil.rmtree(repo_dir)
 
                 clone_url = project.http_url_to_repo
-                if settings.gitlab.token:
+                if settings.gitlab_token:
                     # 使用token进行身份验证
                     clone_url = clone_url.replace(
                         "https://",
-                        f"https://oauth2:{settings.gitlab.token}@"
+                        f"https://oauth2:{settings.gitlab_token}@"
                     )
 
                 repo = Repo.clone_from(clone_url, str(repo_dir), branch=branch)

@@ -61,8 +61,8 @@ class ConfluenceSyncer:
         space_key = space_config["key"]
         space_name = space_config.get("name", space_key)
         target_path = space_config.get("target_path", f"confluence-{space_key}/")
-        include_attachments = space_config.get("include_attachments", False)
-        category = space_config.get("category", "confluence")
+        include_attachments = space_config.get("include_attachments", settings.confluence_include_attachments)
+        category = space_config.get("category", settings.default_confluence_category)
 
         logger.info(
             "Starting sync for Confluence space",

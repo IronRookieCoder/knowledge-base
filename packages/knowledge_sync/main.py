@@ -55,7 +55,7 @@ class SyncService:
                 await self.local_syncer.sync_local_docs(local_config)
 
             # 更新导航（如果启用）
-            if settings.sync.auto_update_nav:
+            if settings.auto_update_nav:
                 await self._update_navigation()
 
             logger.info("Sync completed successfully")
@@ -66,7 +66,7 @@ class SyncService:
 
     async def _load_sync_config(self) -> Dict[str, Any]:
         """加载同步配置"""
-        config_file = Path("config/sources.yml")
+        config_file = Path(settings.sync_config_file)
         if not config_file.exists():
             logger.warning("Sync config file not found, using default config")
             return self._get_default_config()
@@ -86,8 +86,8 @@ class SyncService:
                 "gitlab": [],
                 "confluence": [],
                 "local": {
-                    "docs_dir": "packages/docs/docs",
-                    "category": "docs"
+                    "docs_dir": settings.docs_output_dir,
+                    "category": settings.default_category
                 }
             }
         }
@@ -95,7 +95,7 @@ class SyncService:
     async def _update_navigation(self) -> None:
         """更新导航"""
         try:
-            nav_script = Path(settings.sync.nav_script_path)
+            nav_script = Path(settings.nav_script_path)
             if nav_script.exists():
                 logger.info("Updating navigation")
                 import subprocess
@@ -136,20 +136,20 @@ def sync(config):
 
 @cli.command()
 @click.option("--project-id", required=True, type=int, help="GitLab项目ID")
-@click.option("--docs-path", default="docs/", help="文档目录路径")
-@click.option("--branch", default="main", help="分支名称")
+@click.option("--docs-path", default=None, help="文档目录路径")
+@click.option("--branch", default=None, help="分支名称")
 @click.option("--target-path", help="目标路径")
-@click.option("--category", default="general", help="文档分类")
+@click.option("--category", default=None, help="文档分类")
 def sync_gitlab(project_id, docs_path, branch, target_path, category):
     """同步单个GitLab项目"""
     async def run_gitlab_sync():
         syncer = GitLabSyncer()
         project_config = {
             "project_id": project_id,
-            "docs_path": docs_path,
-            "branch": branch,
+            "docs_path": docs_path or settings.default_gitlab_docs_path,
+            "branch": branch or settings.default_gitlab_branch,
             "target_path": target_path or f"project-{project_id}/",
-            "category": category
+            "category": category or settings.default_general_category
         }
         await syncer.sync_projects([project_config])
 
@@ -160,7 +160,7 @@ def sync_gitlab(project_id, docs_path, branch, target_path, category):
 @click.option("--space-key", required=True, help="Confluence空间键")
 @click.option("--space-name", help="空间名称")
 @click.option("--target-path", help="目标路径")
-@click.option("--category", default="confluence", help="文档分类")
+@click.option("--category", default=None, help="文档分类")
 @click.option("--include-attachments", is_flag=True, help="包含附件")
 def sync_confluence(space_key, space_name, target_path, category, include_attachments):
     """同步单个Confluence空间"""
@@ -170,7 +170,7 @@ def sync_confluence(space_key, space_name, target_path, category, include_attach
             "key": space_key,
             "name": space_name or space_key,
             "target_path": target_path or f"confluence-{space_key}/",
-            "category": category,
+            "category": category or settings.default_confluence_category,
             "include_attachments": include_attachments
         }
         await syncer.sync_spaces([space_config])

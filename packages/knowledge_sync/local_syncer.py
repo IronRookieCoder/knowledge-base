@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import List, Dict, Any, Optional
 from datetime import datetime
 
+from ..knowledge_common.config import settings
 from ..knowledge_common.database import db_manager
 from ..knowledge_common.logging import get_logger
 
@@ -34,8 +35,8 @@ class LocalSyncer:
 
     async def sync_local_docs(self, config: Dict[str, Any]) -> None:
         """同步本地文档"""
-        docs_dir = Path(config.get("docs_dir", "packages/docs/docs"))
-        category = config.get("category", "local")
+        docs_dir = Path(config.get("docs_dir", settings.docs_output_dir))
+        category = config.get("category", settings.default_category)
 
         if not docs_dir.exists():
             logger.warning(f"Local docs directory not found: {docs_dir}")
