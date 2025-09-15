@@ -1,0 +1,40 @@
+#!/bin/sh
+# Git pre-commit hook - 自动更新 mkdocs.yml 导航
+
+echo "检查文档变更并更新导航..."
+
+# 获取仓库根目录 - Windows Git Bash 兼容
+if [ -n "$MSYSTEM" ]; then
+    # Windows Git Bash
+    REPO_ROOT=$(pwd)
+else
+    # Linux/Mac
+    REPO_ROOT=$(git rev-parse --show-toplevel)
+fi
+
+# 检查是否有 docs 目录的变更
+if git diff --cached --name-only | grep -q "^docs/"; then
+    echo "检测到 docs 目录变更，更新导航配置..."
+    
+    # 直接使用 python 命令（Windows 上通常是 python）
+    if command -v python >/dev/null 2>&1; then
+        python "$REPO_ROOT/scripts/update_nav.py"
+    elif command -v python3 >/dev/null 2>&1; then
+        python3 "$REPO_ROOT/scripts/update_nav.py"
+    else
+        echo "错误: 未找到 Python，无法更新导航"
+        exit 0  # 继续提交
+    fi
+    
+    if [ $? -eq 0 ]; then
+        # 检查 mkdocs.yml 是否被修改
+        if git diff --name-only | grep -q "mkdocs.yml"; then
+            echo "导航已更新，将 mkdocs.yml 加入提交..."
+            git add mkdocs.yml
+        fi
+    else
+        echo "警告: 导航更新失败，但继续提交"
+    fi
+fi
+
+exit 0

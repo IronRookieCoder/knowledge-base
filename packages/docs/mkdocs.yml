@@ -1,0 +1,111 @@
+site_name: 业务知识管理平台
+site_description: 业务知识管理平台技术文档 - 提供文档同步、web服务、API服务、MCP服务
+site_url: https://knowledge-base.example.com
+repo_url: https://gitlab.com/knowledge-base/platform
+edit_uri: edit/main/mkdocs/docs/
+
+theme:
+  name: material
+  language: zh
+  custom_dir: overrides
+  font: false  # 禁用 Google Fonts，使用系统字体
+  palette:
+    # Light mode
+  - scheme: default
+    primary: blue
+    accent: blue
+    toggle:
+      icon: material/brightness-7
+      name: 切换至深色模式
+    # Dark mode  
+  - scheme: slate
+    primary: blue
+    accent: blue
+    toggle:
+      icon: material/brightness-4
+      name: 切换至浅色模式
+
+  features:
+  - navigation.tabs
+  - navigation.tabs.sticky
+  - navigation.sections
+  - navigation.expand
+  - navigation.path
+  - navigation.indexes
+  - toc.integrate
+  - search.suggest
+  - search.highlight
+  - search.share
+  - content.code.copy
+  - content.action.edit
+  - content.action.view
+  - content.tabs.link
+
+  icon:
+    repo: fontawesome/brands/gitlab
+
+plugins:
+- search:
+    lang:
+    - en
+    - ja
+    separator: '[\s\-\.]+'
+- minify:
+    minify_html: true
+
+markdown_extensions:
+- abbr
+- admonition
+- attr_list
+- def_list
+- footnotes
+- meta
+- md_in_html
+- toc:
+    permalink: true
+    title: 目录
+- tables
+- pymdownx.arithmatex:
+    generic: true
+- pymdownx.betterem:
+    smart_enable: all
+- pymdownx.caret
+- pymdownx.details
+- pymdownx.emoji:
+    emoji_generator: !!python/name:material.extensions.emoji.to_svg
+    emoji_index: !!python/name:material.extensions.emoji.twemoji
+- pymdownx.highlight:
+    anchor_linenums: true
+- pymdownx.inlinehilite
+- pymdownx.keys
+- pymdownx.magiclink:
+    repo_url_shorthand: true
+    user: squidfunk
+    repo: mkdocs-material
+- pymdownx.mark
+- pymdownx.smartsymbols
+- pymdownx.superfences:
+    custom_fences:
+    - name: mermaid
+      class: mermaid
+      format: !!python/name:pymdownx.superfences.fence_code_format
+- pymdownx.tabbed:
+    alternate_style: true
+- pymdownx.tasklist:
+    custom_checkbox: true
+- pymdownx.tilde
+
+extra:
+  social:
+  - icon: fontawesome/brands/gitlab
+    link: https://gitlab.com/your-repo
+
+extra_css:
+- assets/stylesheets/extra.css
+
+extra_javascript:
+- assets/javascripts/back-to-top.js
+- assets/javascripts/mathjax-config.js
+
+nav:
+- 首页: index.md

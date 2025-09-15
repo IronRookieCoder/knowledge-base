@@ -1,0 +1,350 @@
+/* 自定义 CSS 样式 */
+
+/* 本地字体配置 - 适用于内网环境 */
+:root {
+  /* 中文字体栈 */
+  --md-text-font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", "微软雅黑", "PingFang SC", "Hiragino Sans GB", "Source Han Sans CN", "Noto Sans CJK SC", "WenQuanYi Micro Hei", sans-serif;
+  /* 代码字体栈 */
+  --md-code-font-family: "SF Mono", "Monaco", "Inconsolata", "Fira Code", "Consolas", "Courier New", monospace;
+}
+
+/* 覆盖 Material 主题的字体设置 */
+body, input {
+  font-family: var(--md-text-font-family) !important;
+}
+
+.md-typeset {
+  font-family: var(--md-text-font-family) !important;
+}
+
+.md-typeset code,
+.md-typeset pre,
+.md-typeset kbd {
+  font-family: var(--md-code-font-family) !important;
+}
+
+/* 主色调 #1c6eff */
+:root {
+  --md-primary-fg-color: #1c6eff;
+  --md-primary-fg-color--light: #ECB7B7;
+  --md-primary-fg-color--dark: #90030C;
+}
+
+/* Light mode 自定义颜色 */
+[data-md-color-scheme="default"] {
+  --md-primary-fg-color: #1c6eff;
+  --md-accent-fg-color: #1c6eff;
+}
+
+/* Dark mode 保持 blue */
+[data-md-color-scheme="slate"] {
+  --md-primary-fg-color: #1c6eff;
+  --md-accent-fg-color: #1c6eff;
+}
+
+/* 首页样式优化 */
+.md-typeset h1 {
+  font-weight: 700;
+  color: var(--md-primary-fg-color);
+}
+
+/* 代码块样式 */
+.md-typeset pre {
+  border-radius: 8px;
+}
+
+/* 导航栏样式 */
+.md-header {
+  box-shadow: 0 2px 4px rgba(0,0,0,.1);
+}
+
+/* 搜索框样式 */
+.md-search__input {
+  border-radius: 20px;
+}
+
+/* 表格样式优化 */
+.md-typeset table:not([class]) {
+  border: 1px solid var(--md-default-fg-color--lightest);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+/* 警告框样式 */
+.md-typeset .admonition {
+  border-radius: 8px;
+  border-left: 4px solid var(--md-accent-fg-color);
+}
+
+/* 按钮样式 */
+.md-button {
+  border-radius: 20px;
+  transition: all 0.3s ease;
+}
+
+.md-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(28, 110, 255, 0.3);
+}
+
+/* 卡片样式 */
+.feature-card {
+  background: var(--md-default-bg-color);
+  border-radius: 12px;
+  padding: 24px;
+  margin: 16px 0;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  border: 1px solid var(--md-default-fg-color--lightest);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.feature-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(28, 110, 255, 0.15);
+}
+
+/* 响应式设计 */
+@media screen and (max-width: 76.1875em) {
+  .feature-card {
+    margin: 12px 0;
+    padding: 20px;
+  }
+}
+
+/* 404 页面额外样式优化 */
+.md-main__inner {
+  margin-top: 0;
+}
+
+/* 404 页面专用样式 */
+.error-page .md-content {
+  margin: 0;
+}
+
+/* 优化搜索建议样式 */
+.md-search-result__meta {
+  color: var(--md-default-fg-color--light);
+}
+
+/* 404 页面动画增强 */
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.error-icon:hover svg {
+  animation: pulse 1s ease-in-out;
+}
+
+/* 渐变背景效果 */
+.error-page {
+  background: linear-gradient(135deg, 
+    rgba(28, 110, 255, 0.02) 0%, 
+    rgba(28, 110, 255, 0.01) 50%, 
+    transparent 100%);
+  position: relative;
+}
+
+.error-page::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: 
+    radial-gradient(circle at 20% 50%, rgba(28, 110, 255, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(28, 110, 255, 0.08) 0%, transparent 50%),
+    radial-gradient(circle at 40% 80%, rgba(28, 110, 255, 0.06) 0%, transparent 50%);
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* ==========================================
+   回到顶部按钮样式
+   ========================================== */
+
+.back-to-top {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  width: 50px;
+  height: 50px;
+  background: var(--md-primary-fg-color);
+  border: none;
+  border-radius: 50%;
+  color: white;
+  font-size: 20px;
+  cursor: pointer;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+  z-index: 1000;
+  box-shadow: 0 4px 12px rgba(28, 110, 255, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.back-to-top:hover {
+  background: var(--md-primary-fg-color--dark);
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(28, 110, 255, 0.4);
+}
+
+.back-to-top.show {
+  opacity: 1;
+  visibility: visible;
+}
+
+.back-to-top.clicked {
+  animation: backToTopClick 0.3s ease;
+}
+
+@keyframes backToTopClick {
+  0% {
+    transform: scale(1) translateY(0);
+  }
+  50% {
+    transform: scale(0.9) translateY(-3px);
+  }
+  100% {
+    transform: scale(1) translateY(-3px);
+  }
+}
+
+/* 进度圆环样式 */
+.back-to-top-progress {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  width: 50px;
+  height: 50px;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+  z-index: 999;
+  pointer-events: none;
+}
+
+.back-to-top-progress.show {
+  opacity: 1;
+  visibility: visible;
+}
+
+.back-to-top-progress svg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.back-to-top-progress .progress-ring-bg {
+  fill: none;
+  stroke: rgba(28, 110, 255, 0.2);
+  stroke-width: 3;
+}
+
+.back-to-top-progress .progress-ring {
+  fill: none;
+  stroke: rgba(28, 110, 255, 0.6);
+  stroke-width: 3;
+  stroke-linecap: round;
+  transition: stroke-dasharray 0.1s ease;
+}
+
+/* 小屏幕适配 */
+@media screen and (max-width: 768px) {
+  .back-to-top,
+  .back-to-top-progress {
+    bottom: 20px;
+    right: 20px;
+    width: 45px;
+    height: 45px;
+  }
+  
+  .back-to-top {
+    font-size: 18px;
+  }
+}
+
+/* 超小屏幕适配 */
+@media screen and (max-width: 480px) {
+  .back-to-top,
+  .back-to-top-progress {
+    bottom: 15px;
+    right: 15px;
+    width: 40px;
+    height: 40px;
+  }
+  
+  .back-to-top {
+    font-size: 16px;
+  }
+}
+
+/* 确保按钮在深色模式下也有良好的对比度 */
+[data-md-color-scheme="slate"] .back-to-top {
+  background: var(--md-primary-fg-color);
+  color: white;
+}
+
+[data-md-color-scheme="slate"] .back-to-top:hover {
+  background: #0d4fb8;
+}
+
+/* 动画效果增强 */
+.back-to-top::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  transform: scale(0);
+  transition: transform 0.3s ease;
+}
+
+.back-to-top:active::before {
+  transform: scale(1);
+  transition: transform 0s;
+}
+
+/* 添加工具提示 */
+.back-to-top::after {
+  content: attr(aria-label);
+  position: absolute;
+  right: 60px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+  pointer-events: none;
+}
+
+.back-to-top:hover::after {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(-50%) translateX(-5px);
+}
+
+/* 在深色模式下的工具提示 */
+[data-md-color-scheme="slate"] .back-to-top::after {
+  background: rgba(255, 255, 255, 0.9);
+  color: #333;
+}

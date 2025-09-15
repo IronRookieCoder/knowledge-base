@@ -1,0 +1,326 @@
+{% extends "main.html" %}
+
+{% block config %}
+  {{ super() }}
+  <script>
+    app.title = "404 - 页面未找到"
+  </script>
+{% endblock %}
+
+{% block content %}
+<div class="md-content" data-md-component="content">
+  <article class="md-content__inner md-typeset">
+    <div class="error-page">
+      <div class="error-container">
+        <!-- 404 动画图标 -->
+        <div class="error-icon">
+          <svg viewBox="0 0 200 200" width="200" height="200">
+            <circle cx="100" cy="100" r="90" fill="none" stroke="var(--md-primary-fg-color)" stroke-width="4" stroke-dasharray="20,5" stroke-linecap="round">
+              <animateTransform attributeName="transform" type="rotate" values="0 100 100;360 100 100" dur="3s" repeatCount="indefinite"/>
+            </circle>
+            <text x="100" y="85" text-anchor="middle" font-size="48" font-weight="bold" fill="var(--md-primary-fg-color)">404</text>
+            <text x="100" y="125" text-anchor="middle" font-size="14" fill="var(--md-default-fg-color--light)">AI 找不到这个页面</text>
+          </svg>
+        </div>
+
+        <!-- 错误信息 -->
+        <div class="error-content">
+          <h1 class="error-title">🤖 AI 助手迷路了</h1>
+          <p class="error-message">
+            抱歉，您访问的页面似乎不存在。也许是 AI 还在学习这个页面的位置，或者页面正在被重构中。
+          </p>        
+
+
+          <!-- 搜索框 -->
+          <div class="error-search">
+            <h3>🔍 尝试搜索：</h3>
+            <div class="search-container">
+              <input type="text" id="error-search-input" placeholder="搜索 AI-Native 开发相关内容..." class="search-input">
+              <button onclick="performSearch()" class="search-button">搜索</button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </article>
+</div>
+
+<style>
+.error-page {
+  min-height: 70vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+
+.error-container {
+  max-width: 800px;
+  text-align: center;
+  animation: fadeInUp 0.6s ease-out;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.error-icon {
+  margin-bottom: 2rem;
+  animation: bounce 2s infinite;
+}
+
+@keyframes bounce {
+  0%, 20%, 50%, 80%, 100% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-10px);
+  }
+  60% {
+    transform: translateY(-5px);
+  }
+}
+
+.error-title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--md-primary-fg-color);
+  margin: 1rem 0;
+  background: linear-gradient(45deg, var(--md-primary-fg-color), #4facfe);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.error-message {
+  font-size: 1.1rem;
+  color: var(--md-default-fg-color--light);
+  margin-bottom: 3rem;
+  line-height: 1.6;
+}
+
+.error-suggestions h3 {
+  color: var(--md-primary-fg-color);
+  margin-bottom: 1.5rem;
+  font-size: 1.3rem;
+}
+
+.suggestions-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem;
+  margin-bottom: 3rem;
+}
+
+.suggestion-card {
+  background: var(--md-default-bg-color);
+  border: 2px solid var(--md-default-fg-color--lightest);
+  border-radius: 12px;
+  padding: 1.5rem;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.suggestion-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(28, 110, 255, 0.1), transparent);
+  transition: left 0.5s ease;
+}
+
+.suggestion-card:hover::before {
+  left: 100%;
+}
+
+.suggestion-card:hover {
+  transform: translateY(-5px);
+  border-color: var(--md-primary-fg-color);
+  box-shadow: 0 10px 25px rgba(28, 110, 255, 0.15);
+}
+
+.suggestion-icon {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+}
+
+.suggestion-text strong {
+  display: block;
+  color: var(--md-default-fg-color);
+  font-size: 1rem;
+  margin-bottom: 0.3rem;
+}
+
+.suggestion-text span {
+  color: var(--md-default-fg-color--light);
+  font-size: 0.9rem;
+}
+
+.error-search {
+  margin-bottom: 3rem;
+}
+
+.error-search h3 {
+  color: var(--md-primary-fg-color);
+  margin-bottom: 1rem;
+}
+
+.search-container {
+  display: flex;
+  max-width: 400px;
+  margin: 0 auto;
+  gap: 0.5rem;
+}
+
+.search-input {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  border: 2px solid var(--md-default-fg-color--lightest);
+  border-radius: 25px;
+  font-size: 0.95rem;
+  background: var(--md-default-bg-color);
+  color: var(--md-default-fg-color);
+  transition: border-color 0.3s ease;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: var(--md-primary-fg-color);
+}
+
+.search-button {
+  padding: 0.75rem 1.5rem;
+  background: var(--md-primary-fg-color);
+  color: white;
+  border: none;
+  border-radius: 25px;
+  cursor: pointer;
+  font-size: 0.95rem;
+  transition: all 0.3s ease;
+}
+
+.search-button:hover {
+  background: var(--md-primary-fg-color--dark);
+  transform: translateY(-2px);
+}
+
+.error-tip {
+  background: rgba(28, 110, 255, 0.05);
+  border: 1px solid rgba(28, 110, 255, 0.2);
+  border-radius: 12px;
+  padding: 1.5rem;
+  display: flex;
+  align-items: flex-start;
+  text-align: left;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.tip-icon {
+  font-size: 1.5rem;
+  margin-right: 1rem;
+  flex-shrink: 0;
+}
+
+.tip-text {
+  flex: 1;
+}
+
+.tip-text strong {
+  color: var(--md-primary-fg-color);
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+/* 响应式设计 */
+@media screen and (max-width: 600px) {
+  .error-title {
+    font-size: 2rem;
+  }
+  
+  .suggestions-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .search-container {
+    flex-direction: column;
+  }
+  
+  .search-button {
+    border-radius: 8px;
+  }
+  
+  .search-input {
+    border-radius: 8px;
+  }
+  
+  .error-tip {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .tip-icon {
+    margin-right: 0;
+    margin-bottom: 0.5rem;
+  }
+}
+
+/* 暗色模式优化 */
+[data-md-color-scheme="slate"] .suggestion-card {
+  background: var(--md-default-bg-color);
+  border-color: var(--md-default-fg-color--lightest);
+}
+
+[data-md-color-scheme="slate"] .search-input {
+  background: var(--md-default-bg-color);
+  border-color: var(--md-default-fg-color--lightest);
+  color: var(--md-default-fg-color);
+}
+</style>
+
+<script>
+function performSearch() {
+  const searchInput = document.getElementById('error-search-input');
+  const query = searchInput.value.trim();
+  
+  if (query) {
+    // 如果网站有搜索功能，跳转到搜索页面
+    const baseUrl = '{{ config.site_url or "/" }}';
+    window.location.href = baseUrl + '?q=' + encodeURIComponent(query);
+  }
+}
+
+// 回车键搜索
+document.getElementById('error-search-input').addEventListener('keypress', function(e) {
+  if (e.key === 'Enter') {
+    performSearch();
+  }
+});
+
+// 页面加载时的动画效果
+document.addEventListener('DOMContentLoaded', function() {
+  const cards = document.querySelectorAll('.suggestion-card');
+  cards.forEach((card, index) => {
+    card.style.animationDelay = (index * 0.1) + 's';
+    card.style.animation = 'fadeInUp 0.6s ease-out forwards';
+  });
+});
+</script>
+{% endblock %}
