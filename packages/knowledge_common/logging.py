@@ -2,6 +2,7 @@
 
 import sys
 import logging
+import io
 from pathlib import Path
 from typing import Optional
 import structlog
@@ -39,19 +40,30 @@ def setup_logging(
         cache_logger_on_first_use=True,
     )
 
-    # 配置标准logging
-    logging.basicConfig(
-        format="%(message)s",
-        stream=sys.stdout,
-        level=getattr(logging, level.upper()),
-    )
+    # 配置标准logging - 解决Windows中文编码问题
+    # 确保stdout使用UTF-8编码
+    if sys.platform.startswith('win'):
+        # Windows系统需要特殊处理编码
+        stdout_handler = logging.StreamHandler(
+            io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        )
+    else:
+        stdout_handler = logging.StreamHandler(sys.stdout)
+
+    stdout_handler.setLevel(getattr(logging, level.upper()))
+    stdout_handler.setFormatter(logging.Formatter("%(message)s"))
+
+    # 清除现有handler避免重复
+    logging.getLogger().handlers.clear()
+    logging.getLogger().addHandler(stdout_handler)
+    logging.getLogger().setLevel(getattr(logging, level.upper()))
 
     # 配置文件日志
     if file_path:
         log_path = Path(file_path)
         log_path.parent.mkdir(parents=True, exist_ok=True)
 
-        file_handler = logging.FileHandler(log_path)
+        file_handler = logging.FileHandler(log_path, encoding='utf-8')
         file_handler.setLevel(getattr(logging, level.upper()))
 
         if settings.environment == "production":
