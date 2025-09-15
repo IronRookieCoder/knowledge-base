@@ -188,66 +188,169 @@ class SearchEngine:
         source_type: Optional[str] = None
     ) -> Query:
         """构建搜索查询"""
-        # 多字段搜索
-        parser = MultifieldParser(["title", "content"], self.idx.schema)
-        query = parser.parse(query_str)
+        from whoosh.query import Or, And, Term, Wildcard, FuzzyTerm
+
+        # 预处理查询字符串
+        query_terms = []
+        if settings.chinese_analyzer:
+            # 使用jieba分词
+            words = list(jieba.cut_for_search(query_str))
+            query_terms.extend([word.strip() for word in words if len(word.strip()) >= settings.min_word_len])
+        else:
+            # 英文分词
+            query_terms = [word.strip() for word in query_str.split() if len(word.strip()) > 0]
+
+        if not query_terms:
+            query_terms = [query_str]
+
+        # 构建多字段查询
+        title_queries = []
+        content_queries = []
+
+        for term in query_terms:
+            # 标题字段查询（权重更高）
+            title_queries.append(Term("title", term))
+            title_queries.append(Wildcard("title", f"*{term}*"))
+            if len(term) >= 2:
+                title_queries.append(FuzzyTerm("title", term, maxdist=1))
+
+            # 内容字段查询
+            content_queries.append(Term("content", term))
+            content_queries.append(Wildcard("content", f"*{term}*"))
+            if len(term) >= 2:
+                content_queries.append(FuzzyTerm("content", term, maxdist=1))
+
+        # 组合标题和内容查询
+        title_query = Or(title_queries) if title_queries else None
+        content_query = Or(content_queries) if content_queries else None
+
+        # 标题匹配权重更高
+        main_queries = []
+        if title_query:
+            main_queries.append(title_query.with_boost(2.0))
+        if content_query:
+            main_queries.append(content_query)
+
+        main_query = Or(main_queries) if main_queries else Term("title", query_str)
 
         # 添加过滤条件
         filters = []
         if category:
-            from whoosh.query import Term
             filters.append(Term("category", category))
 
         if source_type:
-            from whoosh.query import Term
             filters.append(Term("source_type", source_type))
 
         # 组合查询
         if filters:
-            from whoosh.query import And
-            return And([query] + filters)
+            return And([main_query] + filters)
 
-        return query
+        return main_query
 
     def _generate_excerpt(self, hit, query_str: str, max_length: int = 200) -> str:
         """生成搜索结果摘要"""
         try:
-            content = hit.get("content", "")
+            # 尝试从不同来源获取内容
+            content = ""
+            if hasattr(hit, 'get'):
+                content = hit.get("content", "")
+            else:
+                # 如果hit是Whoosh的Hit对象，尝试不同的方式访问内容
+                try:
+                    content = hit["content"] if "content" in hit else ""
+                except:
+                    try:
+                        content = str(hit.get("content", ""))
+                    except:
+                        pass
+
             if not content:
-                return ""
+                # 如果没有内容，尝试从标题生成摘要
+                title = ""
+                if hasattr(hit, 'get'):
+                    title = hit.get("title", "")
+                else:
+                    try:
+                        title = hit["title"] if "title" in hit else ""
+                    except:
+                        try:
+                            title = str(hit.get("title", ""))
+                        except:
+                            pass
+                return title[:max_length] if title else ""
 
-            # 简单的摘要生成：查找关键词周围的文本
-            words = jieba.cut(query_str) if settings.chinese_analyzer else query_str.split()
+            # 预处理查询词
+            query_terms = []
+            if settings.chinese_analyzer:
+                words = list(jieba.cut(query_str))
+                query_terms = [word.strip() for word in words if len(word.strip()) >= settings.min_word_len]
+            else:
+                query_terms = [word.strip() for word in query_str.split() if len(word.strip()) > 0]
 
-            for word in words:
-                word = word.strip()
-                if word and word in content:
-                    # 找到关键词位置
-                    pos = content.find(word)
-                    if pos != -1:
-                        # 提取关键词前后的文本
-                        start = max(0, pos - max_length // 2)
-                        end = min(len(content), pos + max_length // 2)
-                        excerpt = content[start:end].strip()
+            # 查找最佳匹配位置
+            best_pos = -1
+            best_score = 0
 
-                        # 高亮关键词
-                        excerpt = excerpt.replace(word, f"**{word}**")
+            for term in query_terms:
+                if term in content:
+                    pos = content.find(term)
+                    # 计算此位置的得分（匹配词的长度）
+                    score = len(term)
+                    if score > best_score:
+                        best_score = score
+                        best_pos = pos
 
-                        if start > 0:
-                            excerpt = "..." + excerpt
-                        if end < len(content):
-                            excerpt = excerpt + "..."
+            if best_pos != -1:
+                # 以最佳匹配位置为中心生成摘要
+                start = max(0, best_pos - max_length // 2)
+                end = min(len(content), best_pos + max_length // 2)
 
-                        return excerpt
+                # 尝试在句子边界调整
+                if start > 0:
+                    # 向前查找句子开始
+                    for i in range(start, max(0, start - 50), -1):
+                        if content[i] in '。！？\n':
+                            start = i + 1
+                            break
+
+                if end < len(content):
+                    # 向后查找句子结束
+                    for i in range(end, min(len(content), end + 50)):
+                        if content[i] in '。！？\n':
+                            end = i + 1
+                            break
+
+                excerpt = content[start:end].strip()
+
+                # 高亮关键词
+                for term in query_terms:
+                    if term in excerpt:
+                        excerpt = excerpt.replace(term, f"**{term}**")
+
+                # 添加省略号
+                if start > 0:
+                    excerpt = "..." + excerpt
+                if end < len(content):
+                    excerpt = excerpt + "..."
+
+                return excerpt
 
             # 如果没有找到关键词，返回内容开头
             if len(content) <= max_length:
-                return content
+                return content.strip()
             else:
-                return content[:max_length] + "..."
+                # 尝试在句子边界截断
+                excerpt = content[:max_length]
+                last_sentence = excerpt.rfind('。')
+                if last_sentence > max_length // 2:
+                    excerpt = excerpt[:last_sentence + 1]
+                else:
+                    excerpt = excerpt + "..."
+
+                return excerpt.strip()
 
         except Exception as e:
-            logger.warning("Failed to generate excerpt", error=str(e))
+            logger.warning("Failed to generate excerpt", error=str(e), query=query_str)
             return ""
 
     async def rebuild_index(self, documents: List[Dict[str, Any]]) -> None:

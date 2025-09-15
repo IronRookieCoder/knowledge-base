@@ -42,3 +42,8 @@ sources:
       target_path: "product-docs/"
       category: "product"
       include_attachments: true
+
+  # 本地文档配置
+  local:
+    docs_dir: "packages/docs/docs"
+    category: "docs"

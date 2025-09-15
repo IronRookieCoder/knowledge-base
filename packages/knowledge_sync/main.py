@@ -14,6 +14,7 @@ from ..knowledge_common.database import db_manager
 from ..knowledge_common.logging import get_logger
 from .gitlab_syncer import GitLabSyncer
 from .confluence_syncer import ConfluenceSyncer
+from .local_syncer import LocalSyncer
 
 logger = get_logger(__name__)
 
@@ -24,6 +25,7 @@ class SyncService:
     def __init__(self):
         self.gitlab_syncer = GitLabSyncer()
         self.confluence_syncer = ConfluenceSyncer()
+        self.local_syncer = LocalSyncer()
 
     async def sync_all(self) -> None:
         """同步所有配置的源"""
@@ -45,6 +47,12 @@ class SyncService:
             if confluence_spaces:
                 logger.info("Starting Confluence sync", space_count=len(confluence_spaces))
                 await self.confluence_syncer.sync_spaces(confluence_spaces)
+
+            # 同步本地文档
+            local_config = config.get("sources", {}).get("local", {})
+            if local_config:
+                logger.info("Starting local docs sync")
+                await self.local_syncer.sync_local_docs(local_config)
 
             # 更新导航（如果启用）
             if settings.sync.auto_update_nav:
@@ -76,7 +84,11 @@ class SyncService:
         return {
             "sources": {
                 "gitlab": [],
-                "confluence": []
+                "confluence": [],
+                "local": {
+                    "docs_dir": "packages/docs/docs",
+                    "category": "docs"
+                }
             }
         }
 

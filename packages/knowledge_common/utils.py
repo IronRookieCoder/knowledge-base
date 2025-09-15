@@ -202,3 +202,88 @@ def truncate_text(text: str, max_length: int, suffix: str = "...") -> str:
         return text
 
     return text[:max_length - len(suffix)] + suffix
+
+
+def extract_markdown_metadata(content: str) -> Dict[str, Any]:
+    """从Markdown内容中提取元数据"""
+    metadata = {}
+
+    # 提取YAML front matter
+    if content.startswith('---'):
+        try:
+            end_index = content.find('---', 3)
+            if end_index > 0:
+                front_matter = content[3:end_index].strip()
+                import yaml
+                fm_data = yaml.safe_load(front_matter)
+                if isinstance(fm_data, dict):
+                    metadata.update(fm_data)
+                    content = content[end_index + 3:].strip()
+        except Exception:
+            pass
+
+    # 提取标题
+    lines = content.split('\n')
+    for line in lines:
+        line = line.strip()
+        if line.startswith('# '):
+            metadata.setdefault('title', line[2:].strip())
+            break
+
+    # 提取描述（第一段非标题文本）
+    description = ""
+    for line in lines:
+        line = line.strip()
+        if line and not line.startswith('#') and not line.startswith('---'):
+            description = line
+            break
+
+    if description:
+        metadata.setdefault('description', extract_text_summary(description))
+
+    return metadata, content
+
+
+def normalize_path(path: str) -> str:
+    """标准化路径"""
+    return str(Path(path).as_posix())
+
+
+def get_content_hash(content: str) -> str:
+    """计算内容哈希"""
+    return hashlib.md5(content.encode('utf-8')).hexdigest()
+
+
+def clean_markdown_content(content: str) -> str:
+    """清理Markdown内容"""
+    # 移除YAML front matter
+    if content.startswith('---'):
+        end_index = content.find('---', 3)
+        if end_index > 0:
+            content = content[end_index + 3:].strip()
+
+    # 移除HTML标签
+    content = re.sub(r'<[^>]+>', '', content)
+
+    # 移除多余的空行
+    content = re.sub(r'\n\s*\n', '\n\n', content)
+
+    return content.strip()
+
+
+def convert_to_markdown(content: str, source_format: str = 'html') -> str:
+    """转换内容为Markdown格式"""
+    if source_format.lower() == 'html':
+        try:
+            import html2text
+            h = html2text.HTML2Text()
+            h.ignore_links = False
+            h.body_width = 0
+            return h.handle(content)
+        except ImportError:
+            # 简单的HTML到文本转换
+            content = re.sub(r'<br\s*/?>', '\n', content)
+            content = re.sub(r'<[^>]+>', '', content)
+            return content
+
+    return content

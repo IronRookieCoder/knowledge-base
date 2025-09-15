@@ -45,7 +45,7 @@ class CategoryModel(BaseModel):
     sort_order: Mapped[int] = Column(Integer, default=0, nullable=False)
 
     # 关系
-    parent = relationship("CategoryModel", remote_side=[id], backref="children")
+    parent = relationship("CategoryModel", remote_side="CategoryModel.id", backref="children")
     documents = relationship("DocumentModel", back_populates="category")
 
     def __repr__(self) -> str:
